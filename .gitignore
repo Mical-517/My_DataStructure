@@ -1,0 +1,67 @@
+# ==================== Visual Studio 核心忽略规则 ====================
+# 1. VS解决方案/项目的本地用户配置（个性化设置，无需推送）
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.vcxproj.user
+.vs/                # VS的隐藏文件夹（包含调试缓存、配置等）
+
+# 2. 编译产物（Debug/Release目录、目标文件、可执行文件等）
+Debug/
+Release/
+x64/
+Win32/
+*.obj               # 目标文件（C/C++编译中间产物）
+*.exe               # 可执行文件
+*.pdb               # 调试符号文件
+*.ilk               # 增量链接文件
+*.idb               # 增量编译数据库
+*.pch               # 预编译头文件
+*.sdf               # 智能感知数据库
+*.opensdf
+*.ipch/             # 预编译头缓存目录
+*.aps               # 资源文件缓存
+
+# 3. VS临时文件
+*.tmp
+*.bak
+*.log
+*.err
+*.sbr
+*.tlb
+*.tli
+*.dll               # 动态链接库（若不是项目产物可保留）
+*.lib               # 静态库（若不是项目产物可保留）
+
+# ==================== VSCode 核心忽略规则 ====================
+# 1. VSCode的本地配置文件夹（launch.json/tasks.json等，个性化配置）
+.vscode/
+# 例外：若想共享VSCode的调试/构建配置，可取消下面注释（按需）
+# !.vscode/settings.json
+# !.vscode/launch.json
+# !.vscode/tasks.json
+
+# 2. VSCode编辑器临时文件
+*.swp               # Vim/VSCode交换文件
+*.swo
+*~                  # 临时文件后缀
+.code-workspace     # VSCode工作区文件（本地使用）
+
+# ==================== 通用C/C++ 忽略规则（跨编辑器） ====================
+# 编译中间产物
+*.o                 # 目标文件（Linux/macOS）
+*.i                 # 预处理文件
+*.ii                # 预处理文件（C++）
+*.s                 # 汇编文件
+*.asm
+# 可执行文件（Linux/macOS）
+*.out
+# 调试文件（macOS）
+*.dSYM/
+
+# ==================== 其他通用忽略规则 ====================
+# 操作系统临时文件
+.DS_Store           # macOS
+Thumbs.db           # Windows
+desktop.ini         # Windows
