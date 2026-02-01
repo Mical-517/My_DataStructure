@@ -510,3 +510,75 @@ void BSTree<DataType>::DSWHelper(BSTNode<DataType>*& rootPtr)
     }
     rootPtr = dummy.right;
 }
+
+template<class DataType>
+void BSTree<DataType>::eraseByCopy(const DataType& data)
+{
+    //先找到data对应节点的指针
+    BSTNode<DataType>* pre=nullptr;
+    BSTNode<DataType>* node=this->root;
+    while(node!=nullptr)
+    {
+        if(node->data==data) break;
+        pre=node;
+        if(data<node->data) node=node->left;
+        else node=node->right;
+    }
+    if(node!=nullptr&&node->data==data)
+    {
+        if(node==this->root)
+        {
+            this->eraseCopyHelper(this->root);
+        }
+        else
+        {
+            if(pre->left==node)
+            {
+                this->eraseCopyHelper(pre->left);
+            }
+            else
+            {
+                this->eraseCopyHelper(pre->right);
+            }
+        }
+    }
+}
+
+template<class DataType>
+void BSTree<DataType>::eraseByCopyHelper(BSTNode<DataType>*& rootPtr)
+{
+    BSTNode<DataType>* temp=rootPtr;
+    BSTNode<DataType>* pre=nullptr;
+    if(temp->right==nullptr)
+    {
+        rootPtr=rootPtr->left;
+    }
+    else
+    {
+        if(temp->right==nullptr)
+        {
+            rootPtr=rootPtr->left;
+        }
+        else
+        {
+            //找到左子树的最右节点
+            temp=temp->left;
+            pre=rootPtr;
+            while(temp->right!=nullptr)
+            {
+                pre=temp;
+                temp=temp->right;
+            }
+            rootPtr->data=temp->data;
+            //如果左子树没有右子树
+            if(pre==rootPtr)
+            {
+                pre->left=temp->left;
+            }
+            else
+            {
+                pre->right=temp->left;
+            }
+        }
+    }
+}
