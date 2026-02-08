@@ -48,6 +48,8 @@ class KDTree
     KDNode<DataType>* search(DataType& value1,DataType& value2);
     //清空树
     void clear();
+    //最近邻搜索
+    KDNode<DataType>* nearestNeighborSearch(const DataType& value1, const DataType& value2);
 
     private:
     KDNode<DataType>* root;
@@ -58,6 +60,8 @@ class KDTree
     KDNode<DataType>* findMin(KDNode<DataType>* rootPtr, int targetDi, int currDi);
     //清空树
     void clearHelper(KDNode<DataType>*& rootPtr);
+    //最近邻搜索辅助函数
+    KDNode<DataType>* nearestNeighborSearchHelper(const KDNode<DataType>* rootPtr,const KDNode<DataType>& targetNode,const KDNode<DataType>* rootPtrParent,int currDi);
 };
 
 template<class DataType>
@@ -209,4 +213,60 @@ void KDTree<DataType>::clearHelper(KDNode<DataType>*& rootPtr)
     clearHelper(rootPtr->right);
     delete rootPtr;
     rootPtr=nullptr;
+}
+
+template<class DataType>
+KDNode<DataType>* KDTree<DataType>::nearestNeighborSearch(const DataType& value1, const DataType& value2)
+{
+    KDNode<DataType> targetNode(value1,value2);
+    if(this->sum==0) return nullptr;
+    return this->nearestNeighborSearchHelper(this->root,targetNode,nullptr,0);
+}
+
+template<class DataType>
+KDNode<DataType>* KDTree<DataType>::nearestNeighborSearchHelper(const KDNode<DataType>* rootPtr,const KDNode<DataType>& targetNode,const KDNode<DataType>* rootPtrParent,int currDi)
+{
+    if(rootPtr==nullptr)
+    {
+        return rootPtrParent;
+    }
+    //判断递归方向
+    int nextDi=(currDi+1)%2;
+    KDNode<DataType>* bestNode=nullptr;
+    if(targetNode.data[currDi]<rootPtr->data[currDi])
+    {
+        bestNode=nearestNeighborSearchHelper(rootPtr->left,targetNode,rootPtr,nextDi);
+    }
+    else
+    {
+        bestNode=nearestNeighborSearchHelper(rootPtr->right,targetNode,rootPtr,nextDi);
+    }
+    //回溯到当前节点时再次判断
+    //1.当前节点是否是最近节点
+    double bestDist=std::sqrt(std::pow(bestNode->data[0]-targetNode.data[0],2)+std::pow(bestNode->data[1]-targetNode.data[1],2));
+    double currDist=std::sqrt(std::pow(rootPtr->data[0]-targetNode.data[0],2)+std::pow(rootPtr->data[1]-targetNode.data[1],2));
+    if(currDist<bestDist)
+    {
+        bestNode=rootPtr;
+    }
+    //2.当前节点另一侧是否有更近的节点
+    double splitDist=std::abs(rootPtr->data[currDi]-targetNode.data[currDi]);
+    if(splitDist<bestDist)
+    {
+        KDNode<DataType>* otherSideNode=nullptr;
+        if(targetNode.data[currDi]<rootPtr->data[currDi])
+        {
+            otherSideNode=nearestNeighborSearchHelper(rootPtr->right,targetNode,bestNode,nextDi);
+        }
+        else
+        {
+            otherSideNode=nearestNeighborSearchHelper(rootPtr->left,targetNode,bestNode,nextDi);
+        }
+        double otherSideDist=std::sqrt(std::pow(otherSideNode->data[0]-targetNode.data[0],2)+std::pow(otherSideNode->data[1]-targetNode.data[1],2));
+        if(otherSideDist<bestDist)
+        {
+            bestNode=otherSideNode;
+        }
+    }
+    return bestNode;
 }
