@@ -1,5 +1,10 @@
 #pragma once
 #include <iostream>
+#include <vector>     // 新增：用于存储结果
+#include <queue>      // 新增：用于优先队列
+#include <limits>     // 新增：用于表示无穷大
+#include <functional> // 新增：用于优先队列的比较器
+
 using namespace std;
 
 template <class DataType, class WeightType>
@@ -67,9 +72,21 @@ public:
     void clear();
     // 打印函数
     void print();
-    // 出度与入度函数
     int outDegree(const DataType data);
     int inDegree(const DataType data);
+
+    // 新增：Dijkstra 算法的返回结果结构体
+    struct DijkstraResult
+    {
+        vector<WeightType> dist; // 存储从源点到各顶点的最短距离
+        vector<int> path;        // 存储最短路径的前驱顶点索引
+    };
+
+    // 新增：Dijkstra 算法的声明
+    DijkstraResult dijkstra(const DataType startVertex);
+
+    // 新增：利用下标可以获取顶点的值
+    DataType getVertexData(int index) const;
 
 private:
     VertexNode<DataType, WeightType> *vertexArry = nullptr;
@@ -258,4 +275,119 @@ void DiGraph<DataType, WeightType>::addVertex(const DataType data)
     vertexArry[this->vertexNum].firstIn = nullptr;
     vertexArry[this->vertexNum].firstOut = nullptr;
     ++this->vertexNum;
+}
+
+/*
+// 新增：Dijkstra 算法的实现
+template <class DataType, class WeightType>
+typename DiGraph<DataType, WeightType>::DijkstraResult DiGraph<DataType, WeightType>::dijkstra(const DataType startVertex)
+{
+    DijkstraResult result;
+    result.dist.resize(vertexNum, numeric_limits<WeightType>::max());
+    result.path.resize(vertexNum, -1);
+
+    int startIndex = search(startVertex);
+    if (startIndex == -1)
+    {
+        cerr << "Start vertex not found\n";
+        return result;
+    }
+    result.dist[startIndex] = 0;
+
+    using PII = pair<WeightType, int>;
+    priority_queue<PII, vector<PII>, greater<PII>> pq;
+    pq.push({0, startIndex});
+
+    while (!pq.empty())
+    {
+        WeightType currDist = pq.top().first;
+        int currIndex = pq.top().second;
+        pq.pop();
+
+        if (currDist > result.dist[currIndex])
+            continue;
+
+        EdgeNode<WeightType> *edge = vertexArry[currIndex].firstOut;
+        while (edge != nullptr)
+        {
+            int nextIndex = edge->tailIndex;
+            WeightType newDist = currDist + edge->weight;
+
+            if (newDist < result.dist[nextIndex])
+            {
+                result.dist[nextIndex] = newDist;
+                result.path[nextIndex] = currIndex;
+                pq.push({newDist, nextIndex});
+            }
+            edge = edge->headEdge;
+        }
+    }
+
+    return result;
+}
+*/
+
+// Dijkstra 算法实现
+template <class DataType, class WeightType>
+typename DiGraph<DataType, WeightType>::DijkstraResult
+DiGraph<DataType, WeightType>::dijkstra(const DataType startVertex)
+{
+    DijkstraResult result;
+    // 初始化result
+    result.dist.resize(this->vertexNum, numeric_limits<WeightType>::max());
+    result.path.resize(this->vertexNum, -1);
+    int startIndex = search(startVertex);
+    if (startIndex == -1)
+    {
+        cerr << "Start vertex not found\n";
+        return result;
+    }
+    result.dist[startIndex] = 0;
+    // 优先队列，存储<距离,顶点索引>，始终将最小的距离放在前面，将其节点下标作为中转站更新到其他邻接节点的最短距离
+    using Pair = pair<WeightType, int>;
+    priority_queue<Pair, vector<Pair>, greater<Pair>> pq;
+    pq.push({0, startIndex});
+    while (!pq.empty())
+    {
+        // 得到当前记录的最短路径以及索引
+        WeightType currDist = pq.top().first;
+        int currIndex = pq.top().second;
+        pq.pop();
+        // 判断当前记录的最短路径是否已经过时（如果当前记录的距离大于result中存储的距离，说明已经有更短的路径被更新了）
+        if (currDist > result.dist[currIndex])
+        {
+            continue;
+        }
+        // 当前索引对应的节点作为中转站更新其所有邻接节点的最短路径
+        EdgeNode<WeightType> *edge = this->vertexArry[currIndex].firstOut;
+        while (edge != nullptr)
+        {
+            // 得到邻接节点的索引以及通过当前节点到达邻接节点的距离
+            int nextIndex = edge->tailIndex;
+            int nextDist = edge->weight;
+            if (result.dist[nextIndex] > result.dist[currIndex] + nextDist)
+            {
+                // 如果当前记录的到邻接节点距离大于通过当前节点再到邻接节点的距离就更新距离
+                result.dist[nextIndex] = result.dist[currIndex] + nextDist;
+                // 更新到达邻接节点的前驱节点
+                result.path[nextIndex] = currIndex;
+                // 将更新后的距离和邻接节点索引加入优先队列
+                pq.push({result.dist[nextIndex], nextIndex});
+            }
+            edge = edge->headEdge;
+        }
+    }
+    return result;
+}
+
+// 新增：利用下标获取顶点数据
+template <class DataType, class WeightType>
+DataType DiGraph<DataType, WeightType>::getVertexData(int index) const
+{
+    if (index < 0 || index >= this->vertexNum)
+    {
+        cerr << "Index out of bounds\n";
+        return DataType();
+    }
+    return this->vertexArry[index].data;
 }
