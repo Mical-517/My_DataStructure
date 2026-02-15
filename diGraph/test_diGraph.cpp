@@ -95,10 +95,79 @@ void test2()
         cout << "------------------------------------\n";
     }
 }
+
+// 辅助函数：根据WFI算法的结果构建路径字符串
+string buildPath(int startIndex, int targetIndex, const vector<vector<int>> &path, const DiGraph<string, int> &g)
+{
+    if (targetIndex == -1)
+    {
+        return "";
+    }
+    string basePath = buildPath(startIndex, path[startIndex][targetIndex], path, g);
+    return basePath + g.getVertexData(targetIndex) + " -> ";
+}
+
+// 测试WFI多源最短路径算法
+void test3()
+{
+    DiGraph<string, int> g(10);
+    g.addVertex("A"); // 索引 0
+    g.addVertex("B"); // 索引 1
+    g.addVertex("C"); // 索引 2
+    g.addVertex("D"); // 索引 3
+    g.addVertex("E"); // 索引 4
+
+    g.addEdge("A", "B", 10);
+    g.addEdge("A", "C", 3);
+    g.addEdge("B", "C", 1);
+    g.addEdge("B", "D", 2);
+    g.addEdge("C", "B", 4);
+    g.addEdge("C", "D", 8);
+    g.addEdge("C", "E", 2);
+    g.addEdge("D", "E", 7);
+    g.addEdge("E", "D", 9);
+
+    cout << "Graph structure:\n";
+    g.print();
+    cout << "\n-----------------------------------\n";
+    auto result = g.WFIalgorithm();
+    cout << "All pairs shortest distances:\n";
+    string startName{" "};
+    string endName{" "};
+    for (int i = 0; i < result.dist.size(); i++)
+    {
+        startName = g.getVertexData(i);
+        cout << "Shortest Distance From " << startName << " to:\n";
+        for (int j = 0; j < result.dist.size(); j++)
+        {
+            endName = g.getVertexData(j);
+            cout << " " << endName << ": \n";
+            if (result.dist[i][j] == numeric_limits<int>::max())
+            {
+                cout << "  Distance: Unreachable\n";
+                cout << "  Path: None\n";
+            }
+            else
+            {
+                cout << "  Distance: " << result.dist[i][j] << "\n";
+                // 构建并打印路径
+                string pathStr{" "};
+                pathStr = buildPath(i, j, result.path, g);
+                if (!pathStr.empty())
+                {
+                    // 去掉最后的" -> "
+                    pathStr = pathStr.substr(0, pathStr.size() - 4);
+                }
+                cout << " Path:     " << pathStr << "\n";
+            }
+            cout << "------------------------------------\n";
+        }
+    }
+}
+
 int main()
 {
 
-    test2();
-
+    test3();
     return 0;
 }

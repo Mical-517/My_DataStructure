@@ -88,6 +88,19 @@ public:
     // 新增：利用下标可以获取顶点的值
     DataType getVertexData(int index) const;
 
+    // 新增WFIalgorithm返回结构体（多源最短路径）
+    struct WFIResult
+    {
+        // 存储各个顶点到各个顶点的最短路径
+        vector<vector<WeightType>> dist;
+        // 存出路径
+        vector<vector<int>> path;
+    };
+    // 新增：WFI算法声明
+    WFIResult WFIalgorithm();
+    // 将十字链表转换为邻接矩阵，方便WFI算法的实现
+    vector<vector<WeightType>> toAdjacencyMarix();
+
 private:
     VertexNode<DataType, WeightType> *vertexArry = nullptr;
     int vertexNum = 0;
@@ -390,4 +403,76 @@ DataType DiGraph<DataType, WeightType>::getVertexData(int index) const
         return DataType();
     }
     return this->vertexArry[index].data;
+}
+
+// WFI算法实现多源最短路径
+template <class DataType, class WeightType>
+typename DiGraph<DataType, WeightType>::WFIResult
+DiGraph<DataType, WeightType>::WFIalgorithm()
+{
+    WFIResult result;
+    int vNum = this->vertexNum;
+    // 初始化result
+    result.dist.resize(vNum, vector<WeightType>(vNum, numeric_limits<WeightType>::max()));
+    result.path.resize(vNum, vector<int>(vNum, -1));
+    vector<vector<WeightType>> adjMatrix = this->toAdjacencyMarix();
+
+    // 初始化 dist 和 path 矩阵
+    for (int i = 0; i < vNum; i++)
+    {
+        for (int j = 0; j < vNum; j++)
+        {
+            if (i == j)
+            {
+                result.dist[i][j] = 0;
+            }
+            else if (adjMatrix[i][j] != numeric_limits<WeightType>::max())
+            {
+                result.dist[i][j] = adjMatrix[i][j];
+                result.path[i][j] = i; // 从 i 到 j 的直接路径，j 的前驱是 i
+            }
+        }
+    }
+
+    // Floyd-Warshall 算法核心
+    // k 是中转顶点
+    for (int k = 0; k < vNum; k++)
+    {
+        // i 是起始顶点
+        for (int i = 0; i < vNum; i++)
+        {
+            // j 是结束顶点
+            for (int j = 0; j < vNum; j++)
+            {
+                // 防止溢出
+                if (result.dist[i][k] != numeric_limits<WeightType>::max() &&
+                    result.dist[k][j] != numeric_limits<WeightType>::max() &&
+                    result.dist[i][j] > result.dist[i][k] + result.dist[k][j])
+                {
+                    result.dist[i][j] = result.dist[i][k] + result.dist[k][j];
+                    // 路径从 i -> ... -> k -> ... -> j
+                    // 所以到达 j 的前驱节点和从 k 到达 j 的前驱节点是一样的
+                    result.path[i][j] = result.path[k][j];
+                }
+            }
+        }
+    }
+    return result;
+}
+
+template <class DataType, class WeightType>
+vector<vector<WeightType>> DiGraph<DataType, WeightType>::toAdjacencyMarix()
+{
+    vector<vector<WeightType>> adjMarix(this->vertexNum, vector<WeightType>(this->vertexNum, numeric_limits<WeightType>::max()));
+    for (int i = 0; i < this->vertexNum; i++)
+    {
+        adjMarix[i][i] = 0; // 顶点到自身的距离为0
+        EdgeNode<WeightType> *edge = this->vertexArry[i].firstOut;
+        while (edge != nullptr)
+        {
+            adjMarix[i][edge->tailIndex] = edge->weight;
+            edge = edge->headEdge;
+        }
+    }
+    return adjMarix;
 }
